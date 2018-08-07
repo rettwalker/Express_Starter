@@ -1,0 +1,7 @@
+instrumentation:
+    excludes:
+      - "config/*.js"
+      - "gulpfile.js"
+      - "server.js"
+      - "routes/*.js"
+      - "logging/*.js"

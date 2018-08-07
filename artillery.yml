@@ -1,0 +1,11 @@
+config:
+  target: 'http://REPLACEME_URL.com'
+
+  defaults:
+scenarios:
+  - name: ''
+    weight: 3
+    flow:
+      - post:
+          url: "url"
+          json:

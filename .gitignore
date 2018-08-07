@@ -1,0 +1,12 @@
+node_modules/
+.idea/
+*.DS_Store
+*.rdb
+coverage
+package-lock.json
+config/globals.js
+*.manifest.yml
+*.tar
+test-results/*
+node_modules
+.nyc_output 
