@@ -1,16 +1,21 @@
 const EventEmitter = require('events'),
     logger = require('../logging/loggerModel')
 
-const RequestHandler = (Controller) => {
-    let handler = Object.assign({}, EventEmitter.prototype, Controller)
-    handler.handleMessage = (req, res) => {
-        handler.emit('data', new Date(), res)
+const RequestHandler = (passedFn) => {
+    return (req, res) => {
+        function handleSuccess(data) {
+            res.status(200)
+            res.json({ data: data })
+        }
+
+        function handleError(err) {
+            res.status(500)
+            return res.json({ ...err })
+        }
+
+        return passedFn(req, res)
+            .then(handleSuccess, handleError)
     }
-    handler.on('data', handler.dataHandler)
-    handler.on('success', handler.successHandler)
-    handler.on('error', handler.errorHandler)
-    //controller.on('retry', controller.retryHandler)
-    return handler
 }
 
 module.exports = RequestHandler;

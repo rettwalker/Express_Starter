@@ -1,59 +1,68 @@
-const chai = require('chai'),
+const expect = require('chai').expect,
     sinon = require('sinon'),
-    RequestHandler = require('../../../controllers/requestHandler'),
-    logger = require('../../../logging/loggerModel'),
     config = require('../../../config'),
-    metrics = require('../../../services/metrics'),
-    expect = chai.expect
+    logger = require('../../../logging/loggerModel'),
+    RequestHandler = require('../../../controllers/requestHandler')
 
-describe('API Handler', () => {
-    let apiHandler, order, LoggerStub, req, res, MetricsStub, EmitMock, MockHandler
+
+describe('RequestHandler', () => {
+    let req, res, ProcessorStub, LoggerStub
     beforeEach(() => {
-        order = {
-            orderNumber: 'W12345643',
-            storeNumber: '9735',
-            accessCode: '123456'
+        req = {
+            method: '',
+            params: {
+                aParameter: '1234'
+            },
+            body: { message: 'do something' }
         }
-        req = { body: order }
         res = {
             status: sinon.stub(),
-            json: sinon.stub()
+            json: sinon.stub(),
+            req: req
         }
-        MockHandler = {
-            dataHandler() { },
-            errorHandler() { },
-            retryHandler() { },
-            successHandler() { }
-        }
-
-        apiHandler = RequestHandler(MockHandler)
-
-        MetricsStub = sinon.stub(metrics, 'writeGeneral')
         LoggerStub = sinon.stub(logger, 'sendLogs')
-        EmitMock = sinon.stub(apiHandler, 'emit')
+        ProcessorStub = sinon.stub()
     })
     afterEach(() => {
-        MetricsStub.restore()
         LoggerStub.restore()
-        EmitMock.restore()
+
     })
-    describe('#handleMessage', () => {
-        it('should handle messages coming in and save to DB', (done) => {
-            EmitMock.callsFake((eventName, passedStartTime, passedRes) => {
-                expect(eventName).to.deep.equal('data')
-                expect(passedRes).to.deep.equal(res)
+
+    it('should return RequestHandler function that will execute the manager', () => {
+        expect(RequestHandler(ProcessorStub)).to.be.an('function')
+    })
+
+    it('should set status to 200 and return the response of the passed in func as the JSON body', (done) => {
+        ProcessorStub.resolves(true)
+        res = {
+            ...res,
+            status(status) {
+                expect(status).to.equal(200)
+            },
+            json(data) {
+                expect(ProcessorStub.calledWith(req, res)).to.be.true
+                expect(data.data).to.be.true
                 done()
-            })
-            apiHandler.handleMessage(req, res)
-        });
-        it('should handle messages coming in and send notifier because no accessCode', (done) => {
-            EmitMock.callsFake((eventName, passedStartTime, passedRes) => {
-                expect(eventName).to.deep.equal('data')
-                expect(passedRes).to.deep.equal(res)
+            }
+        }
+
+        RequestHandler(ProcessorStub)(req, res)
+    })
+
+    it('should set status to 500 and return error message and body of the passed in func as the JSON body', (done) => {
+        ProcessorStub.rejects({ message: 'something broke' })
+        res = {
+            ...res,
+            status(status) {
+                expect(status).to.equal(500)
+            },
+            json(data) {
+                expect(ProcessorStub.calledWith(req, res)).to.be.true
+                expect(data).to.deep.equal({ message: 'something broke' })
                 done()
-            })
-            req.body.accessCode = null;
-            apiHandler.handleMessage(req, res)
-        });
-    });
-});
+            }
+        }
+
+        RequestHandler(ProcessorStub)(req, res)
+    })
+})
