@@ -65,4 +65,30 @@ describe('RequestHandler', () => {
 
         RequestHandler(ProcessorStub)(req, res)
     })
+
+    it('should use custom success function and return the response of the passed in func as the JSON body', () => {
+        ProcessorStub.resolves()
+        CustomHandler = {
+            successHandler: sinon.stub(),
+            errorHandler: sinon.stub()
+        }
+
+        return RequestHandler(ProcessorStub, CustomHandler)(req, res)
+            .then(res => {
+                expect(CustomHandler.successHandler.called).to.be.true
+            })
+    })
+
+    it('should use custom error function and return the response of the passed in func as the JSON body', () => {
+        ProcessorStub.rejects()
+        CustomHandler = {
+            successHandler: sinon.stub(),
+            errorHandler: sinon.stub()
+        }
+
+        return RequestHandler(ProcessorStub, CustomHandler)(req, res)
+            .then(res => {
+                expect(CustomHandler.errorHandler.called).to.be.true
+            })
+    })
 })

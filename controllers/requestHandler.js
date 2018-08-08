@@ -1,21 +1,24 @@
 const EventEmitter = require('events'),
     logger = require('../logging/loggerModel')
 
-const RequestHandler = (passedFn) => {
+
+const RequestHandler = (passedFn, { successHandler, errorHandler } = {}) => {
     return (req, res) => {
-        function handleSuccess(data) {
+        const defaultSuccessHandler = (data) => {
             res.status(200)
             res.json({ data: data })
         }
 
-        function handleError(err) {
+        const defaultErrorHandler = (err) => {
             res.status(500)
             return res.json({ ...err })
         }
 
+        let success = successHandler || defaultSuccessHandler
+        let error = errorHandler || defaultErrorHandler
         return passedFn(req, res)
-            .then(handleSuccess, handleError)
+            .then(success, error)
     }
 }
 
-module.exports = RequestHandler;
+module.exports = RequestHandler
