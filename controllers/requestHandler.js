@@ -2,23 +2,49 @@ const EventEmitter = require('events'),
     logger = require('../logging/loggerModel')
 
 
-const RequestHandler = (passedFn, { successHandler, errorHandler } = {}) => {
-    return (req, res) => {
-        const defaultSuccessHandler = (data) => {
-            res.status(200)
-            res.json({ data: data })
-        }
-
-        const defaultErrorHandler = (err) => {
-            res.status(500)
-            return res.json({ ...err })
-        }
-
-        let success = successHandler || defaultSuccessHandler
-        let error = errorHandler || defaultErrorHandler
-        return passedFn(req, res)
-            .then(success, error)
+const HttpRequest = (controllerFn) => {
+    return function () {
+        return controllerFn(...arguments)
     }
 }
 
-module.exports = RequestHandler
+const AsynchronousRequest = (requestFn) => {
+    return function (req, res) {
+        let successHandler = response => {
+            logger.sendLogs('debug', { className: '', method: '', debugMessage: response })
+        }
+
+        let errorHandler = err => {
+            logger.sendLogs('error', { className: '', method: '', errorMessage: err })
+        }
+        res.status(202)
+        res.json({ message: 'Request Being Processed' })
+        return requestFn({ ...req.params, ...req.body })
+            .then(successHandler, errorHandler)
+    }
+}
+
+const SynchronousRequest = (requestFn) => {
+
+    return function (req, res) {
+        let successHandler = response => {
+            logger.sendLogs('debug', { className: '', method: '', debugMessage: response })
+            res.status(200)
+            res.json({ message: 'Success', data: response })
+
+        }
+
+        let errorHandler = err => {
+            logger.sendLogs('error', { className: '', method: '', errorMessage: err })
+            res.status(500)
+            res.json({ message: err.message })
+        }
+        return requestFn({ ...req.params, ...req.body })
+            .then(successHandler, errorHandler)
+    }
+}
+
+
+module.exports = { HttpRequest, AsynchronousRequest, SynchronousRequest }
+
+

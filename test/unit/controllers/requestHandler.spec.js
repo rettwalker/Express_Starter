@@ -2,11 +2,11 @@ const expect = require('chai').expect,
     sinon = require('sinon'),
     config = require('../../../config'),
     logger = require('../../../logging/loggerModel'),
-    RequestHandler = require('../../../controllers/requestHandler')
+    { HttpRequest, AsynchronousRequest, SynchronousRequest } = require('../../../controllers/requestHandler')
 
 
 describe('RequestHandler', () => {
-    let req, res, ProcessorStub, LoggerStub
+    let req, res, ProcessorStub, LoggerStub, RequestStub
     beforeEach(() => {
         req = {
             method: '',
@@ -22,73 +22,106 @@ describe('RequestHandler', () => {
         }
         LoggerStub = sinon.stub(logger, 'sendLogs')
         ProcessorStub = sinon.stub()
+        RequestStub = sinon.stub()
     })
     afterEach(() => {
         LoggerStub.restore()
 
     })
 
-    it('should return RequestHandler function that will execute the manager', () => {
-        expect(RequestHandler(ProcessorStub)).to.be.an('function')
-    })
-
-    it('should set status to 200 and return the response of the passed in func as the JSON body', (done) => {
-        ProcessorStub.resolves(true)
-        res = {
-            ...res,
-            status(status) {
-                expect(status).to.equal(200)
-            },
-            json(data) {
-                expect(ProcessorStub.calledWith(req, res)).to.be.true
-                expect(data.data).to.be.true
-                done()
-            }
-        }
-
-        RequestHandler(ProcessorStub)(req, res)
-    })
-
-    it('should set status to 500 and return error message and body of the passed in func as the JSON body', (done) => {
-        ProcessorStub.rejects({ message: 'something broke' })
-        res = {
-            ...res,
-            status(status) {
-                expect(status).to.equal(500)
-            },
-            json(data) {
-                expect(ProcessorStub.calledWith(req, res)).to.be.true
-                expect(data).to.deep.equal({ message: 'something broke' })
-                done()
-            }
-        }
-
-        RequestHandler(ProcessorStub)(req, res)
-    })
-
-    it('should use custom success function and return the response of the passed in func as the JSON body', () => {
+    it('should return function that will execute the manager function passed in', () => {
+        expect(HttpRequest(ProcessorStub)).to.be.an('function')
         ProcessorStub.resolves()
-        CustomHandler = {
-            successHandler: sinon.stub(),
-            errorHandler: sinon.stub()
-        }
-
-        return RequestHandler(ProcessorStub, CustomHandler)(req, res)
+        HttpRequest(ProcessorStub)()
             .then(res => {
-                expect(CustomHandler.successHandler.called).to.be.true
+                expect(ProcessorStub.called).to.be.true
             })
     })
 
-    it('should use custom error function and return the response of the passed in func as the JSON body', () => {
-        ProcessorStub.rejects()
-        CustomHandler = {
-            successHandler: sinon.stub(),
-            errorHandler: sinon.stub()
-        }
+    describe('Should return Asynchr controller', () => {
+        let StatusStub, JSONStub
+        beforeEach(() => {
+            StatusStub = sinon.stub()
+            JSONStub = sinon.stub()
+        })
+        it('should execute request and handle it as an aysnch request', () => {
+            expect(AsynchronousRequest(RequestStub)).to.be.an('function')
+            RequestStub.resolves()
 
-        return RequestHandler(ProcessorStub, CustomHandler)(req, res)
-            .then(res => {
-                expect(CustomHandler.errorHandler.called).to.be.true
+            res = {
+                status: StatusStub,
+                json: JSONStub
+            }
+
+            return AsynchronousRequest(RequestStub)(req, res)
+                .then(res => {
+                    expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
+                    expect(StatusStub.calledWith(202)).to.be.true
+                    expect(JSONStub.calledWith({ message: 'Request Being Processed' })).to.be.true
+                    expect(LoggerStub.calledWith('debug')).to.be.true
+                })
+        })
+
+        it('should execute request and handle when something blows up it as an aysnch request', () => {
+            expect(AsynchronousRequest(RequestStub)).to.be.an('function')
+            RequestStub.rejects(new Error('Something Blew Up'))
+
+            res = {
+                status: StatusStub,
+                json: JSONStub
+            }
+
+            return AsynchronousRequest(RequestStub)(req, res)
+                .catch(res => {
+                    expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
+                    expect(JSONStub.calledWith({ message: 'Request Being Processed' })).to.be.true
+                    expect(StatusStub.calledWith(202)).to.be.true
+                    expect(LoggerStub.calledWith('error')).to.be.true
+                })
+        })
+
+        describe('Handle requests that are supposed to synchronous', () => {
+            let StatusStub, JSONStub
+            beforeEach(() => {
+                StatusStub = sinon.stub()
+                JSONStub = sinon.stub()
             })
+            it('should return a function that handles a request synchronously', () => {
+                expect(SynchronousRequest()).to.be.an('function')
+                RequestStub.resolves({ message: 'a response' })
+
+                res = {
+                    status: StatusStub,
+                    json: JSONStub
+                }
+
+                return SynchronousRequest(RequestStub)(req, res)
+                    .then(res => {
+                        expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
+                        expect(StatusStub.calledWith(200)).to.be.true
+                        expect(JSONStub.calledWith({ message: 'Success', data: { message: 'a response' } })).to.be.true
+                        expect(LoggerStub.calledWith('debug')).to.be.true
+                    })
+            })
+
+            it('should return a function that handles a request synchronously', () => {
+                expect(SynchronousRequest()).to.be.an('function')
+                RequestStub.rejects(new Error('Big Error'))
+
+                res = {
+                    status: StatusStub,
+                    json: JSONStub
+                }
+
+                return SynchronousRequest(RequestStub)(req, res)
+                    .then(res => {
+                        expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
+                        expect(StatusStub.calledWith(500)).to.be.true
+                        expect(JSONStub.calledWith({ message: 'Big Error' })).to.be.true
+                        expect(LoggerStub.calledWith('error')).to.be.true
+                    })
+            })
+        })
     })
+
 })

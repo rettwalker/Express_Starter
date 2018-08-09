@@ -8,8 +8,8 @@
         "start:local": "NODE_ENV=local concurrently --raw \"gulp build-local\" \"npm run start:server\" ",
         "build:develop": "gulp test && gulp build-develop",
         "build:production": "gulp test && gulp build-production",
-        "test": "gulp globals && gulp test",
-        "test-int": "gulp globals && gulp test-integration --exit",
+        "test": "mocha test/unit/**/*",
+        "test-int": "mocha test/integration/**/* test/integration/**/**/* --exit",
         "coverage": "nyc --reporter=lcov node_modules/mocha/bin/_mocha test/unit/**/*.spec.js test/unit/**/**/**/*.spec.js  test/unit/**/**/*.spec.js --include-all-sources && open coverage/lcov-report/index.html",
         "coverage-integration": "nyc --reporter=lcov node_modules/mocha/bin/_mocha  test/integration/**/*.spec.js --include-all-sources --exit"
     },
@@ -18,8 +18,8 @@
         "npm": "^5.6.0"
     },
     "dependencies": {
-        "body-parser": "~1.13.2",
-        "compression": "~1.0.1",
+        "body-parser": "^1.18.3",
+        "compression": "^1.7.3",
         "concurrently": "^3.5.1",
         "express": "^4.13.1",
         "gulp": "^3.9.1"

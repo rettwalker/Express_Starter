@@ -1,5 +1,4 @@
-const metrics = require('../services/metrics'),
-    logger = require('../logging/loggerModel'),
+const logger = require('../logging/loggerModel'),
     ServiceError = require('../utility/ServiceError')
 
 const Utility = {
