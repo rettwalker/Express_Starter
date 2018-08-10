@@ -68,4 +68,37 @@ describe('Utility', () => {
             expect(utility.ConvertStringToBoolean('false')).to.be.false
         })
     })
+
+    describe('Determine the average CPU from user and sys', () => {
+        let cpuUsuage
+        beforeEach(() => {
+            cpuUsuage = [
+                {
+                    "model": "Intel(R) Core(TM) i7-4870HQ CPU @ 2.50GHz",
+                    "speed": 2500,
+                    "times": {
+                        "user": 4,
+                        "nice": 0,
+                        "sys": 2,
+                        "idle": 100,
+                        "irq": 0
+                    }
+                },
+                {
+                    "model": "Intel(R) Core(TM) i7-4870HQ CPU @ 2.50GHz",
+                    "speed": 2500,
+                    "times": {
+                        "user": 2,
+                        "nice": 0,
+                        "sys": 2,
+                        "idle": 100,
+                        "irq": 0
+                    }
+                }
+            ]
+        })
+        it('should calculate average cpu usuage', () => {
+            expect(utility.GetAverageCPU(cpuUsuage)).to.equal(2.380952380952381)
+        })
+    })
 })

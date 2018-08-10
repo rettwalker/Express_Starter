@@ -2,7 +2,7 @@ const expect = require('chai').expect,
     sinon = require('sinon'),
     config = require('../../../config'),
     logger = require('../../../logging/loggerModel'),
-    { HttpRequest, AsynchronousRequest, SynchronousRequest } = require('../../../controllers/requestHandler')
+    { HttpRequest, AsynchronousRequest, SynchronousRequest } = require('../../../routes/requestHandler')
 
 
 describe('RequestHandler', () => {
@@ -38,7 +38,7 @@ describe('RequestHandler', () => {
             })
     })
 
-    describe('Should return Asynchr controller', () => {
+    describe('Should return Asynchronous controller', () => {
         let StatusStub, JSONStub
         beforeEach(() => {
             StatusStub = sinon.stub()

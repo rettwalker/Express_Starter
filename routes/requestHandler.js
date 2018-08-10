@@ -1,10 +1,9 @@
-const EventEmitter = require('events'),
-    logger = require('../logging/loggerModel')
+const logger = require('../logging/loggerModel')
 
 
 const HttpRequest = (controllerFn) => {
     return function () {
-        return controllerFn(...arguments)
+        return Promise.resolve(controllerFn(...arguments))
     }
 }
 
