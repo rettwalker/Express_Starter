@@ -23,19 +23,7 @@ var server = require('http').createServer(app);
 
 var port = process.env.PORT || 3000;
 
-server.listen(port, function() {
-    var startUpObj = {
-        env: config.projectInfo.env,
-        port: port,
-        message: 'Locker_Blocker Starting Up'
-    }
-    var logObj = {
-        "appName": "Locker_Blocker",
-        "timeExecuted": Date.now(),
-        "debugMessage": startUpObj
-    };
-    console.log(JSON.stringify(logObj));
-});
+server.listen(port, () => { console.log('Application Started') });
 
 app.set('showStackError', true);
 
