@@ -55,7 +55,8 @@ describe('Fns surrounding gather metrics for services', () => {
             cpus: cpuUsuage,
             up_time: 'uptime',
             total_memory: 'totalmem',
-            free_memory: 'freemem'
+            free_memory: 'freemem',
+            average_cpu: 2.380952380952381
         })
         expect(CPUStubs.called).to.be.true
         expect(UptimeStub.called).to.be.true

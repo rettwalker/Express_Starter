@@ -9,7 +9,9 @@ const GenericSystemMetrics = () => {
         cpus: cpus,
         up_time: os.uptime(),
         total_memory: os.totalmem(),
-        free_memory: os.freemem()
+        free_memory: os.freemem(),
+        average_cpu: GetAverageCPU(cpus)
+
     }
 }
 

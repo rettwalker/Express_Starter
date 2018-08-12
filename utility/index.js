@@ -20,8 +20,7 @@ const Utility = {
         return value.toUpperCase() === 'TRUE' ? true : false
     },
     GetAverageCPU(cpus) {
-        let total = cpus.reduce((acc, { times }) => acc + Object.values(times).reduce((acc, curr) => acc + curr, 0), 0)
-        return ((cpus.reduce((acc, { times }) => acc + (Math.round(100 * (times.user + times.sys))), 0) / cpus.length) / total)
+        return ((cpus.reduce((acc, { times }) => acc + (Math.round(100 * (times.user + times.sys))), 0) / cpus.reduce((acc, { times }) => acc + Object.values(times).reduce((acc, curr) => acc + curr, 0), 0) / cpus.length))
     },
     ServiceError: ServiceError
 
