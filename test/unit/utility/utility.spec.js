@@ -1,33 +1,24 @@
 const chai = require('chai'),
     sinon = require('sinon'),
-    utility = require('../../../utility'),
+    { HandleAsyncFn, ...utility } = require('../../../utility'),
     expect = chai.expect;
 
 describe('Utility', () => {
+    let FN1stub, FN2stub, chainList
     beforeEach(() => {
-        OVQStub = sinon.stub()
-        HazmatStub = sinon.stub()
-        StatusStub = sinon.stub()
-        StoreStub = sinon.stub()
-        ShipmentStub = sinon.stub()
-        EmailStub = sinon.stub()
-        chainList = [Promise.resolve(), OVQStub, EmailStub, HazmatStub, StatusStub, ShipmentStub, StoreStub]
+        FN1stub = sinon.stub()
+        FN2stub = sinon.stub()
+
+        chainList = [Promise.resolve(), FN1stub, FN2stub]
     })
     it('Should run though all functions ', () => {
-        OVQStub.resolves({})
-        EmailStub.resolves({})
-        HazmatStub.resolves({})
-        StatusStub.resolves({})
-        ShipmentStub.resolves({})
-        StoreStub.resolves({})
+        FN1stub.resolves({})
+        FN2stub.resolves({})
+
         return utility.ExecuteListOfPromises(chainList)
             .then(res => {
-                expect(OVQStub.called).to.be.true
-                expect(EmailStub.called).to.be.true
-                expect(HazmatStub.called).to.be.true
-                expect(StatusStub.called).to.be.true
-                expect(ShipmentStub.called).to.be.true
-                expect(StoreStub.called).to.be.true
+                expect(FN1stub.called).to.be.true
+                expect(FN2stub.called).to.be.true
             })
     })
     describe('Get Missing Property', () => {
@@ -99,6 +90,47 @@ describe('Utility', () => {
         })
         it('should calculate average cpu usuage', () => {
             expect(utility.GetAverageCPU(cpuUsuage)).to.equal(2.380952380952381)
+        })
+    })
+
+    describe('Will handle async functions, and use custom error and success handlers if provided', () => {
+        it('will take in a function that is asnyc and then execute it using the default handlers', () => {
+            FN1stub.resolves({ message: 'returned Object' })
+            expect(HandleAsyncFn).to.be.a('function')
+            expect(HandleAsyncFn()).to.be.a('function')
+            expect(HandleAsyncFn(FN1stub)()).to.be.a('promise')
+            return HandleAsyncFn(FN1stub)({ message: 'something' })
+                .then(res => {
+                    expect(FN1stub.calledWith({ message: 'something' })).to.be.true
+                    expect(res).to.deep.equal({ message: 'returned Object' })
+                })
+        })
+
+        it('will take in a function that is asnyc and then execute it using custom success handler', () => {
+            FN1stub.resolves({ message: 'object' })
+            FN2stub.resolves({ message: 'returned Object' })
+            expect(HandleAsyncFn).to.be.a('function')
+            expect(HandleAsyncFn()).to.be.a('function')
+            expect(HandleAsyncFn(FN1stub, FN2stub)()).to.be.a('promise')
+            return HandleAsyncFn(FN1stub, FN2stub)({ message: 'something' })
+                .then(res => {
+                    expect(FN1stub.calledWith({ message: 'something' })).to.be.true
+                    expect(FN2stub.calledWith({ message: 'object' })).to.be.true
+                    expect(res).to.deep.equal({ message: 'returned Object' })
+                })
+        })
+        it('will take in a function that is asnyc and then execute it using custom error handler', () => {
+            FN1stub.rejects({ message: 'object' })
+            FN2stub.resolves({ message: 'returned Object' })
+            expect(HandleAsyncFn).to.be.a('function')
+            expect(HandleAsyncFn()).to.be.a('function')
+            expect(HandleAsyncFn(FN1stub, undefined, FN2stub)()).to.be.a('promise')
+            return HandleAsyncFn(FN1stub, undefined, FN2stub)({ message: 'something' })
+                .then(res => {
+                    expect(FN1stub.calledWith({ message: 'something' })).to.be.true
+                    expect(FN2stub.calledWith({ message: 'object' })).to.be.true
+                    expect(res).to.deep.equal({ message: 'returned Object' })
+                })
         })
     })
 })

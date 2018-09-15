@@ -1,7 +1,7 @@
 const express = require('express'),
     router = express.Router(),
     { GenericSystemMetrics } = require('../../controllers/metrics'),
-    { HttpRequest, AsynchronousRequest, SynchronousRequest } = require('../requestHandler')
-router.get('/', SynchronousRequest(HttpRequest(GenericSystemMetrics)))
+    { SynchronousHTTPRequest } = require('../requestHandler')
+router.get('/', SynchronousHTTPRequest(() => Promise.resolve(GenericSystemMetrics())))
 
 module.exports = router

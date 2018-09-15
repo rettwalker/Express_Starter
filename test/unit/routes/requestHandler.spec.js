@@ -1,12 +1,12 @@
 const expect = require('chai').expect,
     sinon = require('sinon'),
     config = require('../../../config'),
-    logger = require('../../../logging/loggerModel'),
-    { HttpRequest, AsynchronousRequest, SynchronousRequest } = require('../../../routes/requestHandler')
+    logger = require('../../../logger'),
+    { AsynchronousHTTPRequest, SynchronousHTTPRequest } = require('../../../routes/requestHandler')
 
 
 describe('RequestHandler', () => {
-    let req, res, ProcessorStub, LoggerStub, RequestStub
+    let req, res, LoggerStub, LoggerErrorStub, RequestStub
     beforeEach(() => {
         req = {
             method: '',
@@ -20,22 +20,13 @@ describe('RequestHandler', () => {
             json: sinon.stub(),
             req: req
         }
-        LoggerStub = sinon.stub(logger, 'sendLogs')
-        ProcessorStub = sinon.stub()
+        LoggerStub = sinon.stub(logger, 'info')
+        LoggerErrorStub = sinon.stub(logger, 'error')
         RequestStub = sinon.stub()
     })
     afterEach(() => {
         LoggerStub.restore()
-
-    })
-
-    it('should return function that will execute the manager function passed in', () => {
-        expect(HttpRequest(ProcessorStub)).to.be.an('function')
-        ProcessorStub.resolves()
-        HttpRequest(ProcessorStub)()
-            .then(res => {
-                expect(ProcessorStub.called).to.be.true
-            })
+        LoggerErrorStub.restore()
     })
 
     describe('Should return Asynchronous controller', () => {
@@ -45,7 +36,7 @@ describe('RequestHandler', () => {
             JSONStub = sinon.stub()
         })
         it('should execute request and handle it as an aysnch request', () => {
-            expect(AsynchronousRequest(RequestStub)).to.be.an('function')
+            expect(AsynchronousHTTPRequest(RequestStub)).to.be.an('function')
             RequestStub.resolves()
 
             res = {
@@ -53,17 +44,17 @@ describe('RequestHandler', () => {
                 json: JSONStub
             }
 
-            return AsynchronousRequest(RequestStub)(req, res)
+            return AsynchronousHTTPRequest(RequestStub)(req, res)
                 .then(res => {
                     expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
                     expect(StatusStub.calledWith(202)).to.be.true
                     expect(JSONStub.calledWith({ message: 'Request Being Processed' })).to.be.true
-                    expect(LoggerStub.calledWith('debug')).to.be.true
+                    expect(LoggerStub.called).to.be.true
                 })
         })
 
         it('should execute request and handle when something blows up it as an aysnch request', () => {
-            expect(AsynchronousRequest(RequestStub)).to.be.an('function')
+            expect(AsynchronousHTTPRequest(RequestStub)).to.be.an('function')
             RequestStub.rejects(new Error('Something Blew Up'))
 
             res = {
@@ -71,56 +62,89 @@ describe('RequestHandler', () => {
                 json: JSONStub
             }
 
-            return AsynchronousRequest(RequestStub)(req, res)
-                .catch(res => {
+            return AsynchronousHTTPRequest(RequestStub)(req, res)
+                .then(res => {
                     expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
                     expect(JSONStub.calledWith({ message: 'Request Being Processed' })).to.be.true
                     expect(StatusStub.calledWith(202)).to.be.true
-                    expect(LoggerStub.calledWith('error')).to.be.true
+                    expect(LoggerErrorStub.called).to.be.true
+                })
+        })
+    })
+
+    describe('Handle requests that are supposed to synchronous', () => {
+        let StatusStub, JSONStub
+        beforeEach(() => {
+            StatusStub = sinon.stub()
+            JSONStub = sinon.stub()
+        })
+        it('should return a function that handles a request synchronously', () => {
+            expect(SynchronousHTTPRequest()).to.be.an('function')
+            RequestStub.resolves({ message: 'a response' })
+
+            res = {
+                status: StatusStub,
+                json: JSONStub
+            }
+
+            return SynchronousHTTPRequest(RequestStub)(req, res)
+                .then(res => {
+                    expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
+                    expect(StatusStub.calledWith(200)).to.be.true
+                    expect(JSONStub.calledWith({ message: 'a response' })).to.be.true
                 })
         })
 
-        describe('Handle requests that are supposed to synchronous', () => {
-            let StatusStub, JSONStub
-            beforeEach(() => {
-                StatusStub = sinon.stub()
-                JSONStub = sinon.stub()
-            })
-            it('should return a function that handles a request synchronously', () => {
-                expect(SynchronousRequest()).to.be.an('function')
-                RequestStub.resolves({ message: 'a response' })
+        it('should return a function that handles a request synchronously', () => {
+            expect(SynchronousHTTPRequest()).to.be.an('function')
+            RequestStub.resolves({ message: 'a response', status: 201 })
 
-                res = {
-                    status: StatusStub,
-                    json: JSONStub
-                }
+            res = {
+                status: StatusStub,
+                json: JSONStub
+            }
 
-                return SynchronousRequest(RequestStub)(req, res)
-                    .then(res => {
-                        expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
-                        expect(StatusStub.calledWith(200)).to.be.true
-                        expect(JSONStub.calledWith({ message: 'Success', data: { message: 'a response' } })).to.be.true
-                        expect(LoggerStub.calledWith('debug')).to.be.true
-                    })
-            })
+            return SynchronousHTTPRequest(RequestStub)(req, res)
+                .then(res => {
+                    expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
+                    expect(StatusStub.calledWith(201)).to.be.true
+                    expect(JSONStub.calledWith({ status: 201, message: 'a response' })).to.be.true
+                })
+        })
 
-            it('should return a function that handles a request synchronously', () => {
-                expect(SynchronousRequest()).to.be.an('function')
-                RequestStub.rejects(new Error('Big Error'))
 
-                res = {
-                    status: StatusStub,
-                    json: JSONStub
-                }
+        it('should return a function that handles a request synchronously', () => {
+            expect(SynchronousHTTPRequest()).to.be.an('function')
+            RequestStub.rejects({ message: 'Big Error' })
 
-                return SynchronousRequest(RequestStub)(req, res)
-                    .then(res => {
-                        expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
-                        expect(StatusStub.calledWith(500)).to.be.true
-                        expect(JSONStub.calledWith({ message: 'Big Error' })).to.be.true
-                        expect(LoggerStub.calledWith('error')).to.be.true
-                    })
-            })
+            res = {
+                status: StatusStub,
+                json: JSONStub
+            }
+
+            return SynchronousHTTPRequest(RequestStub)(req, res)
+                .then(res => {
+                    expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
+                    expect(StatusStub.calledWith(500)).to.be.true
+                    expect(JSONStub.calledWith({ message: 'Big Error' })).to.be.true
+                })
+        })
+
+        it('should return a function that handles a request synchronously with a custom status', () => {
+            expect(SynchronousHTTPRequest()).to.be.an('function')
+            RequestStub.rejects({ status: 502, message: 'BIG ERROR' })
+
+            res = {
+                status: StatusStub,
+                json: JSONStub
+            }
+
+            return SynchronousHTTPRequest(RequestStub)(req, res)
+                .then(res => {
+                    expect(RequestStub.calledWith({ aParameter: '1234', message: 'do something' })).to.be.true
+                    expect(StatusStub.calledWith(502)).to.be.true
+                    expect(JSONStub.calledWith({ status: 502, message: 'BIG ERROR' })).to.be.true
+                })
         })
     })
 

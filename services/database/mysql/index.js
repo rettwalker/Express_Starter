@@ -17,8 +17,6 @@ const GetConnection = () => () => Promise.resolve(mysql.createConnection(databas
 
 const GetPoolConnection = poolFn => () => poolFn()().then(pool => new Promise((resolve, reject) => pool.getConnection((err, connection) => err ? reject(err) : resolve(connection))))
 
-
-
 const RunQuery = connectionFn => query => {
     let queryHandler = conn => new Promise((resolve, reject) => conn.query(query, (error, results, fields) => error ? reject(error) : resolve(results)))
     return connectionFn().then(queryHandler)

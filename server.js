@@ -1,10 +1,10 @@
 let config = require('./config'),
-    logger = require('./logging/loggerModel'),
+    logger = require('./logger'),
     bodyParser = require('body-parser'),
     express = require('express'),
     compression = require('compression'),
     path = require('path'),
-    mw = require('./middleware'),
+    { syntaxCheck, requestLogging } = require('./middleware'),
     routes = require('./routes'),
     app = express();
 
@@ -13,17 +13,20 @@ app.use(bodyParser.json());
 app.use(compression());
 
 //error handling for bad json
-app.use(mw.syntaxCheck, mw.setResponseHeaders);
-
-
-app.use('/', routes);
+app.use(syntaxCheck);
 
 // SERVER
-var server = require('http').createServer(app);
+let server = require('http')
+    .createServer(app)
+    .listen(process.env.PORT || 3000, () => {
+        logger.info('Application Started UP')
+    });
 
-var port = process.env.PORT || 3000;
+server.on('request', (req, res) => {
+    logger.info({ req: req });
+})
 
-server.listen(port, () => { console.log('Application Started') });
+app.use('/', routes);
 
 app.set('showStackError', true);
 

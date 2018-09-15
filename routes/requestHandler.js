@@ -1,49 +1,46 @@
-const logger = require('../logging/loggerModel')
+const logger = require('../logger')
 
-
-const HttpRequest = (controllerFn) => {
-    return function () {
-        return Promise.resolve(controllerFn(...arguments))
-    }
-}
-
-const AsynchronousRequest = (requestFn) => {
+/*
+    PARAMS: function that is handling the request must be promised based at the current moment
+*/
+const AsynchronousHTTPRequest = (controllerFn) => {
     return function (req, res) {
         let successHandler = response => {
-            logger.sendLogs('debug', { className: '', method: '', debugMessage: response })
+            logger.info('Async Request Complete', { req, req }, response)
         }
 
         let errorHandler = err => {
-            logger.sendLogs('error', { className: '', method: '', errorMessage: err })
+            logger.error('Async Request Errored', { req, req }, err)
+            return
         }
         res.status(202)
         res.json({ message: 'Request Being Processed' })
-        return requestFn({ ...req.params, ...req.body })
+        return controllerFn({ ...req.params, ...req.body })
             .then(successHandler, errorHandler)
     }
 }
 
-const SynchronousRequest = (requestFn) => {
+/*
+    PARAMS: function that is handling the request must be promised based at the current moment
+*/
+const SynchronousHTTPRequest = (controllerFn) => {
 
     return function (req, res) {
         let successHandler = response => {
-            logger.sendLogs('debug', { className: '', method: '', debugMessage: response })
-            res.status(200)
-            res.json({ message: 'Success', data: response })
-
+            res.status(response.status || 200)
+            res.json(response)
         }
 
         let errorHandler = err => {
-            logger.sendLogs('error', { className: '', method: '', errorMessage: err })
-            res.status(500)
-            res.json({ message: err.message })
+            res.status(err.status || 500)
+            res.json(err)
         }
-        return requestFn({ ...req.params, ...req.body })
+        return controllerFn({ ...req.params, ...req.body })
             .then(successHandler, errorHandler)
     }
 }
 
 
-module.exports = { HttpRequest, AsynchronousRequest, SynchronousRequest }
+module.exports = { AsynchronousHTTPRequest, SynchronousHTTPRequest }
 
 
