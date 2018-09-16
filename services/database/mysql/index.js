@@ -1,7 +1,7 @@
 const mysql = require('mysql'),
     { database } = require('../../../config'),
     { Release, BeginTransaction, Commit, Rollback } = require('./transaction'),
-    { ExecuteListOfPromises } = require('../../../utility')
+    { ExecuteListOfPromises } = require('../../../util')
 
 let pool = null
 

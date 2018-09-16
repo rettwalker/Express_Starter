@@ -1,0 +1,19 @@
+version: '3'
+services:
+  metric_server:
+    image: "rettwalker/metric_server:latest"
+    container_name: metric_server
+    depends_on:
+      - express_server
+    ports:
+      - "9090:9090"
+    volumes:
+      - './prometheus:/prometheus'
+  express_server:
+    build: .
+    container_name: express_starter
+    ports:
+      - "3000:3000"
+    volumes:
+    - .:/usr/src/app
+    command: ["npm", "start"]

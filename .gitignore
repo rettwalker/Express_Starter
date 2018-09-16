@@ -10,3 +10,4 @@ config/globals.js
 test-results/*
 node_modules
 .nyc_output 
+prometheus/*

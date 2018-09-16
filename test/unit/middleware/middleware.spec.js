@@ -2,7 +2,7 @@ const chai = require('chai'),
     sinon = require('sinon'),
     mw = require('../../../middleware'),
     logger = require('../../../logger'),
-    utility = require('../../../utility'),
+    utility = require('../../../util'),
     expect = chai.expect
 
 describe('MiddleWare', () => {

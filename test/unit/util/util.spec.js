@@ -1,6 +1,6 @@
 const chai = require('chai'),
     sinon = require('sinon'),
-    { HandleAsyncFn, ...utility } = require('../../../utility'),
+    { HandleAsyncFn, ...utility } = require('../../../util'),
     expect = chai.expect;
 
 describe('Utility', () => {

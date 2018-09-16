@@ -1,9 +1,9 @@
 const logger = require('../logger'),
-    utility = require('../utility')
+    utility = require('../util')
 const Middleware = {
     syntaxCheck(err, req, res, next) {
         if (err instanceof SyntaxError) {
-            logger.warn('Syntax Error Found', { req: req });
+            logger.error('Syntax Error Found', { req: req });
             res.status(500);
             res.json('BAD JSON');
         } else {
