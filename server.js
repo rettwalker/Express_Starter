@@ -3,49 +3,16 @@ let config = require('./config'),
     bodyParser = require('body-parser'),
     express = require('express'),
     compression = require('compression'),
-    { syntaxCheck } = require('./middleware'),
+    { syntaxCheck, requestLogger, requestCounters, responseCounters } = require('./middleware'),
     routes = require('./routes'),
     app = express(),
-    prometheus = require('./util/metrics')
+    metrics = require('./util/metrics')
 
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(bodyParser.json())
-app.use(compression())
+app.use(bodyParser.urlencoded({ extended: true }), bodyParser.json())
 
-//error handling for bad json
-app.use(syntaxCheck)
+app.use(compression(), syntaxCheck, requestLogger, requestCounters, responseCounters)
 
-// app.use(function (req, res, next) {
-//     logger.info({ req: req }, 'initiate request')
-//     function afterResponse() {
-//         res.removeListener('close', afterResponse)
-//         res.removeListener('finish', afterResponse)
-//         // action after response
-//         let endTime = new Date()
-//         logger.info({ req: res, statusCode: res.statusCode, latency: endTime.getTime() - res.startTime.getTime() }, 'finish request')
-//     }
-//     res.on('finish', afterResponse)
-//     res.on('close', afterResponse)
-//     res.url = req.path
-//     res.startTime = new Date()
-//     next()
-// })
-
-/**
- * The below arguments start the counter functions
- */
-app.use(prometheus.requestCounters);
-
-/**
- * Enable metrics endpoint
- */
-app.use(prometheus.requestCounters);
-prometheus.injectMetricsRoute(app);
-
-/**
- * Enable collection of default metrics
- */
-prometheus.startCollection();
+metrics.startCollection();
 
 app.use('/', routes)
 
