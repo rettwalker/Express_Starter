@@ -1,5 +1,4 @@
 const { Counter, Summary, collectDefaultMetrics, register } = require('prom-client'),
-    ResponseTime = require('response-time'),
     logger = require('../logger');
 
 /**
