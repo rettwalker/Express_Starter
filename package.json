@@ -23,9 +23,11 @@
         "concurrently": "^3.5.1",
         "express": "^4.13.1",
         "mysql": "^2.16.0",
-        "prom-client": "^11.1.1"
+        "prom-client": "^11.1.1",
+        "response-time": "^2.3.2"
     },
     "devDependencies": {
+        "artillery": "^1.6.0-24",
         "chai": "^4.1.2",
         "mocha": "^5.2.0",
         "nock": "^9.1.6",

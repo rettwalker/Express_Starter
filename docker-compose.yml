@@ -1,4 +1,9 @@
 version: '3'
+
+volumes:
+    prometheus_data: {}
+    grafana_data: {}
+
 services:
   metric_server:
     image: "rettwalker/metric_server:latest"
@@ -8,7 +13,22 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - './prometheus:/prometheus'
+      - prometheus_data:/prometheus
+  
+  grafana:
+    image: grafana/grafana
+    user: "104"
+    depends_on:
+      - metric_server
+    ports:
+      - 3030:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    env_file:
+      - ./grafana/config.monitoring
+    restart: always
+  
   express_server:
     build: .
     container_name: express_starter

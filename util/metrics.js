@@ -1,29 +1,14 @@
-/**
- * Newly added requires
- */
-var Register = require('prom-client').register;
-var Counter = require('prom-client').Counter;
-var Summary = require('prom-client').Summary;
-var logger = require('../logger');
-
-/**
- * A Prometheus counter that counts the invocations of the different HTTP verbs
- * e.g. a GET and a POST call will be counted as 2 different calls
- */
-module.exports.numOfRequests = numOfRequests = new Counter({
-    name: 'numOfRequests',
-    help: 'Number of requests made',
-    labelNames: ['method']
-});
+const { register, Counter, Summary, collectDefaultMetrics } = require('prom-client'),
+    logger = require('../logger');
 
 /**
  * A Prometheus counter that counts the invocations with different paths
  * e.g. /foo and /bar will be counted as 2 different paths
  */
-module.exports.pathsTaken = pathsTaken = new Counter({
-    name: 'pathsTaken',
-    help: 'Paths taken in the app',
-    labelNames: ['path']
+module.exports.callCount = callCount = new Counter({
+    name: 'volume',
+    help: 'volume for all endpoints',
+    labelNames: ['path', 'method']
 });
 
 /**
@@ -40,7 +25,7 @@ module.exports.responses = responses = new Summary({
  */
 module.exports.startCollection = function () {
     logger.info(`Starting the collection of metrics, the metrics are available on /metrics`);
-    require('prom-client').collectDefaultMetrics();
+    collectDefaultMetrics();
 };
 
 /**
@@ -49,8 +34,7 @@ module.exports.startCollection = function () {
  */
 module.exports.requestCounters = function (req, res, next) {
     if (req.path != '/metrics') {
-        numOfRequests.inc({ method: req.method });
-        pathsTaken.inc({ path: req.path });
+        callCount.inc({ path: req.path, method: req.method });
     }
     next();
 }
@@ -60,8 +44,8 @@ module.exports.requestCounters = function (req, res, next) {
  */
 module.exports.injectMetricsRoute = function (app) {
     app.get('/metrics', (req, res) => {
-        logger.info('metrics gathered')
-        res.set('Content-Type', Register.contentType);
-        res.end(Register.metrics());
+        res.set('Content-Type', register.contentType);
+        res.end(register.metrics());
+        callCount.reset()
     });
 };

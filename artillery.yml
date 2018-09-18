@@ -1,11 +1,17 @@
 config:
-  target: 'http://REPLACEME_URL.com'
-
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 300
+      arrivalRate: 5
   defaults:
 scenarios:
-  - name: ''
+  - name: 'api'
+    weight: 2
+    flow:
+      - get:
+          url: "/api"
+  - name: 'basic'
     weight: 3
     flow:
-      - post:
-          url: "url"
-          json:
+      - get:
+          url: "/test"
